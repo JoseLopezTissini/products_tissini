@@ -9,7 +9,6 @@ const ProductItem: React.FunctionComponent<ProductItemProps> = ({
   product,
   handleOnAdd,
 }) => {
-  console.log('rendered');
   return (
     <div className="my-4">
       <Image

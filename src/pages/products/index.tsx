@@ -1,4 +1,4 @@
-import { ReactElement, useCallback, useState } from 'react';
+import { ReactElement, useCallback, useContext, useState } from 'react';
 import { GetStaticProps } from 'next';
 import axios from 'axios';
 
@@ -7,11 +7,11 @@ import MainLayout from '../../layouts/main-layout';
 
 import { CartItem, Product } from '../../core/models/products.model';
 import { getDiscount } from '../../core/utils/getDiscount';
+import { CartContext } from '../../core/context/CartContext';
 
 const Products = (props: ProductsPageProps) => {
   const [products, setProducts] = useState(props.products);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [subtotal, setSubtotal] = useState(0);
+  const { cart: { cart, subtotal }, setCart } = useContext(CartContext);
 
   const handleOnAdd = useCallback(
     (product: Product) => {
@@ -34,20 +34,21 @@ const Products = (props: ProductsPageProps) => {
           },
         ];
   
-        setCart(newCart);
-  
         const newSubtotal = newCart.reduce(
           (acc, current) => acc + current.price * current.quantity,
           0
         );
-        setSubtotal(newSubtotal);
+        setCart({
+          cart: newCart,
+          subtotal: newSubtotal
+        })
   
         const newProducts = products.map((mappingProduct) => {
           const prices = mappingProduct.variants.map((variant) => +variant.price);
           const minPrice = Math.min(...prices);
           const maxPrice = Math.max(...prices);
   
-          const discount = getDiscount(mappingProduct.category.name, subtotal);
+          const discount = getDiscount(mappingProduct.category.name, newSubtotal);
           const newMin = (minPrice * (1 - discount)).toFixed(2);
           const newMax = (maxPrice * (1 - discount)).toFixed(2);
   
@@ -59,17 +60,20 @@ const Products = (props: ProductsPageProps) => {
   
         setProducts(newProducts);
       } else {
-        setCart([
-          {
-            product: product,
-            price: +product.variants[0].price,
-            variant: product.variants[0],
-            quantity: 1,
-          },
-        ]);
+        setCart({
+          cart: [
+            {
+              product: product,
+              price: +product.variants[0].price,
+              variant: product.variants[0],
+              quantity: 1,
+            },
+          ],
+          subtotal: +product.variants[0].price
+        })
       }
     },
-    [cart, products, subtotal],
+    [cart, products, setCart],
   )
 
   return (
