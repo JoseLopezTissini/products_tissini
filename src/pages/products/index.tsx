@@ -1,46 +1,81 @@
-import { ReactElement } from 'react';
+import { ReactElement, useCallback, useState } from 'react';
 import { GetStaticProps } from 'next';
-import Image from 'next/image';
 import axios from 'axios';
 
+import ProductItem from '../../components/products/ProductItem';
 import MainLayout from '../../layouts/main-layout';
 
-const noImageUrl =
-  'https://programacion.net/files/article/20161110041116_image-not-found.png';
+import { CartItem, Product } from '../../core/models/products.model';
+import { getDiscount } from '../../core/utils/getDiscount';
 
-const products: any[] = [];
+const Products = (props: ProductsPageProps) => {
+  const [products, setProducts] = useState(props.products);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [subtotal, setSubtotal] = useState(0);
+
+  const handleOnAdd = useCallback(
+    (product: Product) => {
+      const currentProduct = cart.find(
+        ({ variant }) => variant.id === product.variants[0].id
+      );
   
-const Products = () => {
+      if (currentProduct) {
+        const filteredCart = cart.filter(
+          ({ variant }) => variant.id !== product.variants[0].id
+        );
+  
+        const newCart = [
+          ...filteredCart,
+          {
+            product: product,
+            price: +product.variants[0].price,
+            variant: product.variants[0],
+            quantity: currentProduct.quantity + 1,
+          },
+        ];
+  
+        setCart(newCart);
+  
+        const newSubtotal = newCart.reduce(
+          (acc, current) => acc + current.price * current.quantity,
+          0
+        );
+        setSubtotal(newSubtotal);
+  
+        const newProducts = products.map((mappingProduct) => {
+          const prices = mappingProduct.variants.map((variant) => +variant.price);
+          const minPrice = Math.min(...prices);
+          const maxPrice = Math.max(...prices);
+  
+          const discount = getDiscount(mappingProduct.category.name, subtotal);
+          const newMin = (minPrice * (1 - discount)).toFixed(2);
+          const newMax = (maxPrice * (1 - discount)).toFixed(2);
+  
+          return {
+            ...mappingProduct,
+            price: newMin === newMax ? `${newMax}` : `${newMin} - ${newMax}`,
+          };
+        });
+  
+        setProducts(newProducts);
+      } else {
+        setCart([
+          {
+            product: product,
+            price: +product.variants[0].price,
+            variant: product.variants[0],
+            quantity: 1,
+          },
+        ]);
+      }
+    },
+    [cart, products, subtotal],
+  )
 
   return (
     <>
       {products.map((product) => (
-        <div key={product.id} className="my-4">
-          <Image
-            src={
-              product.images[0]
-                ? `https://v3.tissini.app${product.images[0].url}`
-                : noImageUrl
-            }
-            alt={product.name}
-            width="300"
-            height="300"
-          />
-          <div>
-            <div>
-              {product.name}
-            </div>
-            <div>
-              {product.category.name}
-            </div>
-            <div>
-              {product.price}
-            </div>
-            <button className="uppercase px-4 py-1 bg-gray-100 shadow">
-              Add to cart
-            </button>
-          </div>
-        </div>
+        <ProductItem product={product} handleOnAdd={handleOnAdd} key={product.id} />
       ))}
     </>
   );
@@ -50,8 +85,20 @@ Products.getLayout = (page: ReactElement) => {
   return <MainLayout>{page}</MainLayout>;
 };
 
+export const getStaticProps: GetStaticProps = async () => {
+  const response = await axios.get(
+    'https://v3.tissini.app/api/v3/categories/1/products'
+  );
+  const { products } = await response.data;
+  return {
+    props: {
+      products,
+    },
+  };
+};
+
 interface ProductsPageProps {
-  products: any[];
+  products: Product[];
 }
 
 export default Products;
