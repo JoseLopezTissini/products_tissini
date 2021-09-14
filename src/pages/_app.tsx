@@ -1,9 +1,9 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { PageWithLayout } from '../core/types/layout.type';
-import { CartContext } from '../core/context/CartContext';
 import { CartItem } from '../core/models/products.model';
-import { useState } from 'react';
+import { Provider } from 'react-redux';
+import { useStore } from '@core/store/store';
 
 type AppPropsWithLayout = AppProps & {
   Component: PageWithLayout;
@@ -15,13 +15,15 @@ export interface CartState {
 }
 
 function MyApp({ Component, pageProps }: AppPropsWithLayout) {
-  const [cart, setCart] = useState<CartState>({ cart: [], subtotal: 0 });
+  /* const [cart, setCart] = useState<CartState>({ cart: [], subtotal: 0 }); */
+
+  const store = useStore();
   const getLayout = Component.getLayout ?? ((page) => page);
 
   return (
-    <CartContext.Provider value={{ cart, setCart }}>
+    <Provider store={store}>
       {getLayout(<Component {...pageProps} />)}
-    </CartContext.Provider>
+    </Provider>
   );
 }
 export default MyApp;
