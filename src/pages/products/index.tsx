@@ -1,85 +1,34 @@
-import { ReactElement, useCallback, useContext, useState } from 'react';
-import { GetStaticProps } from 'next';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { ReactElement, useCallback, useEffect } from 'react';
 
-import ProductItem from '../../components/products/ProductItem';
-import MainLayout from '../../layouts/main-layout';
+import ProductItem from '@components/products/ProductItem';
+import MainLayout from '@layouts/main-layout';
 
-import { CartItem, Product } from '../../core/models/products.model';
-import { getDiscount } from '../../core/utils/getDiscount';
-import { CartContext } from '../../core/context/CartContext';
+import { RootState } from '@core/store/store';
+import { getProducts } from '@core/store/products/products.action';
+import { Product } from '@core/models/products.model';
+import { addProduct } from '@core/store/cart/cart.action';
 
-const Products = (props: ProductsPageProps) => {
-  const [products, setProducts] = useState(props.products);
-  const { cart: { cart, subtotal }, setCart } = useContext(CartContext);
+const Products = () => {
+  const { products } = useSelector((state: RootState) => state.products);
+  const dispatch = useDispatch();
 
-  const handleOnAdd = useCallback(
-    (product: Product) => {
-      const currentProduct = cart.find(
-        ({ variant }) => variant.id === product.variants[0].id
-      );
-  
-      if (currentProduct) {
-        const filteredCart = cart.filter(
-          ({ variant }) => variant.id !== product.variants[0].id
-        );
-  
-        const newCart = [
-          ...filteredCart,
-          {
-            product: product,
-            price: +product.variants[0].price,
-            variant: product.variants[0],
-            quantity: currentProduct.quantity + 1,
-          },
-        ];
-  
-        const newSubtotal = newCart.reduce(
-          (acc, current) => acc + current.price * current.quantity,
-          0
-        );
-        setCart({
-          cart: newCart,
-          subtotal: newSubtotal
-        })
-  
-        const newProducts = products.map((mappingProduct) => {
-          const prices = mappingProduct.variants.map((variant) => +variant.price);
-          const minPrice = Math.min(...prices);
-          const maxPrice = Math.max(...prices);
-  
-          const discount = getDiscount(mappingProduct.category.name, newSubtotal);
-          const newMin = (minPrice * (1 - discount)).toFixed(2);
-          const newMax = (maxPrice * (1 - discount)).toFixed(2);
-  
-          return {
-            ...mappingProduct,
-            price: newMin === newMax ? `${newMax}` : `${newMin} - ${newMax}`,
-          };
-        });
-  
-        setProducts(newProducts);
-      } else {
-        setCart({
-          cart: [
-            {
-              product: product,
-              price: +product.variants[0].price,
-              variant: product.variants[0],
-              quantity: 1,
-            },
-          ],
-          subtotal: +product.variants[0].price
-        })
-      }
-    },
-    [cart, products, setCart],
-  )
+  useEffect(() => {
+    dispatch(getProducts());
+  }, [dispatch]);
+
+  const handleOnAdd = useCallback((product: Product) => {
+    dispatch(addProduct(product));
+  }, [dispatch]);
 
   return (
     <>
       {products.map((product) => (
-        <ProductItem product={product} handleOnAdd={handleOnAdd} key={product.id} />
+        <ProductItem
+          product={product}
+          handleOnAdd={handleOnAdd}
+          key={product.id}
+        />
       ))}
     </>
   );
@@ -88,21 +37,5 @@ const Products = (props: ProductsPageProps) => {
 Products.getLayout = (page: ReactElement) => {
   return <MainLayout>{page}</MainLayout>;
 };
-
-export const getStaticProps: GetStaticProps = async () => {
-  const response = await axios.get(
-    'https://v3.tissini.app/api/v3/categories/1/products'
-  );
-  const { products } = await response.data;
-  return {
-    props: {
-      products,
-    },
-  };
-};
-
-interface ProductsPageProps {
-  products: Product[];
-}
 
 export default Products;

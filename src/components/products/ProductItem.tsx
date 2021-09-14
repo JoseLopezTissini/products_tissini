@@ -9,6 +9,7 @@ const ProductItem: React.FunctionComponent<ProductItemProps> = ({
   product,
   handleOnAdd,
 }) => {
+  console.log('Product item');
   return (
     <div className="my-4">
       <Image

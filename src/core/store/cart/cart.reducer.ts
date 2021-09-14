@@ -17,10 +17,11 @@ export function cartReducer(
   action: Action<CartAction>
 ): CartState {
   switch (action.type) {
-    case 'ADD_PRODUCT':
+    case 'UPDATE_CART':
       return {
         ...state,
-        products: [...state.products, action.payload],
+        products: [...action.payload.products],
+        subtotal: action.payload.subtotal,
       };
     default:
       return state;
