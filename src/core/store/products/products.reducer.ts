@@ -1,13 +1,15 @@
-import { Product } from '@core/models/products.model';
+import { Product, ProductPrice } from '@core/models/products.model';
 import { Action } from '@core/types/action.type';
 import { ProductAction } from './products.action';
 
 export interface ProductsState {
   products: Product[];
+  prices: ProductPrice[];
 }
 
 const initialState: ProductsState = {
   products: [],
+  prices: [],
 };
 
 export function productsReducer(
@@ -19,6 +21,11 @@ export function productsReducer(
       return {
         ...state,
         products: action.payload,
+      };
+    case 'SET_PRICES':
+      return {
+        ...state,
+        prices: action.payload,
       };
     default:
       return state;

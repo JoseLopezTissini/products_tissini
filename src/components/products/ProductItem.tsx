@@ -2,6 +2,7 @@ import Image from 'next/image';
 import React from 'react';
 
 import { Product } from '../../core/models/products.model';
+import ProductPrice from './ProductPrice';
 const noImageUrl =
   'https://programacion.net/files/article/20161110041116_image-not-found.png';
 
@@ -25,7 +26,7 @@ const ProductItem: React.FunctionComponent<ProductItemProps> = ({
       <div>
         <div>{product.name}</div>
         <div>{product.category.name}</div>
-        <div>{product.price}</div>
+        <ProductPrice id={product.id} />
         <button
           className="uppercase px-4 py-1 bg-gray-100 shadow"
           onClick={() => handleOnAdd(product)}

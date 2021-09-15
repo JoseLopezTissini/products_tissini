@@ -42,3 +42,8 @@ export interface CartItem {
   quantity: number;
   price: number;
 }
+
+export interface ProductPrice {
+  productid: number;
+  price: string;
+}
