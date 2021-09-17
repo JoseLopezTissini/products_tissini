@@ -28,8 +28,8 @@ export function getProducts() {
     const response = await axios.get(
       'https://l8.tissini.dev/api/v3/categories/1/products'
     );
-    const products: Product[] = await response.data;
-    const productsPrices: ProductPrice[] = products.map((product) => ({
+    const { products } = await response.data;
+    const productsPrices: ProductPrice[] = products.map((product: Product) => ({
       productid: product.id,
       price: product.variants[0] ? +product.variants[0].price : 0,
     }));

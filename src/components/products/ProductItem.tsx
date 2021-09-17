@@ -33,6 +33,9 @@ const ProductItem: React.FunctionComponent<ProductItemProps> = ({
         >
           Add to cart
         </button>
+        <pre>
+          {Math.random()}
+        </pre>
       </div>
     </div>
   );
